@@ -6,19 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 type AddTaskFormProps = {
-  onAdd: (title: string) => void;
+  onAdd: (title: string) => Promise<void>;
+  isLoading: boolean;
 };
 
-export function AddTaskForm({ onAdd }: AddTaskFormProps) {
+export function AddTaskForm({ onAdd, isLoading }: AddTaskFormProps) {
   const [title, setTitle] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmed = title.trim();
-    if (!trimmed) return;
+    if (!trimmed || isLoading) return;
 
-    onAdd(trimmed);
+    await onAdd(trimmed);
     setTitle("");
   };
 
@@ -29,8 +30,11 @@ export function AddTaskForm({ onAdd }: AddTaskFormProps) {
         onChange={(event) => setTitle(event.target.value)}
         placeholder="Add a new task..."
         aria-label="Task title"
+        disabled={isLoading}
       />
-      <Button type="submit">Add Task</Button>
+      <Button type="submit" disabled={isLoading || !title.trim()}>
+        {isLoading ? "Adding..." : "Add Task"}
+      </Button>
     </form>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,33 +9,42 @@ import type { Task } from "@/types";
 
 type TaskItemProps = {
   task: Task;
-  onToggle: (id: string, completed: boolean) => void;
-  onDelete: (id: string) => void;
+  onToggle: (id: string, completed: boolean) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+  isToggling: boolean;
+  isDeleting: boolean;
 };
 
-export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
-  const [completed, setCompleted] = useState(task.completed);
-
-  useEffect(() => {
-    setCompleted(task.completed);
-  }, [task.id, task.completed]);
-
-  const handleToggle = (checked: boolean) => {
-    setCompleted(checked);
-    onToggle(task.id, checked);
-  };
+export function TaskItem({
+  task,
+  onToggle,
+  onDelete,
+  isToggling,
+  isDeleting,
+}: TaskItemProps) {
+  const isBusy = isToggling || isDeleting;
 
   return (
-    <li className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
-      <Checkbox
-        checked={completed}
-        onCheckedChange={(checked) => handleToggle(checked === true)}
-        aria-label={`Mark "${task.title}" as ${completed ? "incomplete" : "complete"}`}
-      />
+    <li
+      className={cn(
+        "flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5",
+        isBusy && "opacity-60"
+      )}
+    >
+      {isToggling ? (
+        <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+      ) : (
+        <Checkbox
+          checked={task.completed}
+          onCheckedChange={(checked) => onToggle(task.id, checked === true)}
+          disabled={isBusy}
+          aria-label={`Mark "${task.title}" as ${task.completed ? "incomplete" : "complete"}`}
+        />
+      )}
       <span
         className={cn(
           "min-w-0 flex-1 text-sm",
-          completed && "text-muted-foreground line-through"
+          task.completed && "text-muted-foreground line-through"
         )}
       >
         {task.title}
@@ -46,10 +54,11 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
         variant="ghost"
         size="icon-sm"
         onClick={() => onDelete(task.id)}
+        disabled={isBusy}
         aria-label={`Delete "${task.title}"`}
         className="text-muted-foreground hover:text-destructive"
       >
-        <X />
+        {isDeleting ? <Loader2 className="animate-spin" /> : <X />}
       </Button>
     </li>
   );

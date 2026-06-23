@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AddTaskForm } from "@/components/AddTaskForm";
@@ -14,9 +15,13 @@ type TaskListProps = {
   tasks: Task[];
   selectedProjectId: string;
   projectName: string;
-  onAddTask: (title: string) => void;
-  onToggleTask: (id: string, completed: boolean) => void;
-  onDeleteTask: (id: string) => void;
+  isLoading: boolean;
+  isAdding: boolean;
+  togglingTaskId: string | null;
+  deletingTaskId: string | null;
+  onAddTask: (title: string) => Promise<void>;
+  onToggleTask: (id: string, completed: boolean) => Promise<void>;
+  onDeleteTask: (id: string) => Promise<void>;
 };
 
 const FILTERS: { value: TaskFilter; label: string }[] = [
@@ -29,6 +34,10 @@ export function TaskList({
   tasks,
   selectedProjectId,
   projectName,
+  isLoading,
+  isAdding,
+  togglingTaskId,
+  deletingTaskId,
   onAddTask,
   onToggleTask,
   onDeleteTask,
@@ -77,7 +86,7 @@ export function TaskList({
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-6">
-        <AddTaskForm onAdd={onAddTask} />
+        <AddTaskForm onAdd={onAddTask} isLoading={isAdding} />
 
         <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1">
           {FILTERS.map(({ value, label }) => (
@@ -89,7 +98,7 @@ export function TaskList({
               onClick={() => setFilter(value)}
               className={cn(
                 "flex-1",
-                filter === value && "bg-accent text-foreground shadow-sm"
+                filter === value && "bg-background text-foreground shadow-sm"
               )}
             >
               {label}
@@ -97,7 +106,12 @@ export function TaskList({
           ))}
         </div>
 
-        {filteredTasks.length > 0 ? (
+        {isLoading ? (
+          <div className="flex flex-1 items-center justify-center py-12 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 size-4 animate-spin" />
+            Loading tasks...
+          </div>
+        ) : filteredTasks.length > 0 ? (
           <ul className="flex flex-col gap-2">
             {filteredTasks.map((task) => (
               <TaskItem
@@ -105,6 +119,8 @@ export function TaskList({
                 task={task}
                 onToggle={onToggleTask}
                 onDelete={onDeleteTask}
+                isToggling={togglingTaskId === task.id}
+                isDeleting={deletingTaskId === task.id}
               />
             ))}
           </ul>
