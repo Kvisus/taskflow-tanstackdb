@@ -1,0 +1,7 @@
+FROM postgres:17-alpine
+
+ENV POSTGRES_USER=taskflow
+ENV POSTGRES_PASSWORD=taskflow
+ENV POSTGRES_DB=taskflow
+
+EXPOSE 5432
