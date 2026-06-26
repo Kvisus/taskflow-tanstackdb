@@ -1,27 +1,19 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { eq, useLiveQuery } from "@tanstack/react-db";
 import { useMemo, useState } from "react";
 
+import { tasksCollection } from "@/collections/tasksCollection";
 import { AddTaskForm } from "@/components/AddTaskForm";
 import { TaskItem } from "@/components/TaskItem";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Task } from "@/types";
 
 type TaskFilter = "all" | "active" | "done";
 
 type TaskListProps = {
-  tasks: Task[];
-  selectedProjectId: string;
+  selectedProjectId: number | null;
   projectName: string;
-  isLoading: boolean;
-  isAdding: boolean;
-  togglingTaskId: string | null;
-  deletingTaskId: string | null;
-  onAddTask: (title: string) => Promise<void>;
-  onToggleTask: (id: string, completed: boolean) => Promise<void>;
-  onDeleteTask: (id: string) => Promise<void>;
 };
 
 const FILTERS: { value: TaskFilter; label: string }[] = [
@@ -30,23 +22,25 @@ const FILTERS: { value: TaskFilter; label: string }[] = [
   { value: "done", label: "Done" },
 ];
 
-export function TaskList({
-  tasks,
-  selectedProjectId,
-  projectName,
-  isLoading,
-  isAdding,
-  togglingTaskId,
-  deletingTaskId,
-  onAddTask,
-  onToggleTask,
-  onDeleteTask,
-}: TaskListProps) {
+export function TaskList({ selectedProjectId, projectName }: TaskListProps) {
   const [filter, setFilter] = useState<TaskFilter>("all");
 
-  const projectTasks = useMemo(
-    () => tasks.filter((task) => task.projectId === selectedProjectId),
-    [tasks, selectedProjectId]
+  const { data: projectTasks = [] } = useLiveQuery(
+    (q) => {
+      if (selectedProjectId === null) return undefined;
+
+      return q
+        .from({ task: tasksCollection })
+        .where(({ task }) => eq(task.projectId, selectedProjectId))
+        .select(({ task }) => ({
+          id: task.id,
+          title: task.title,
+          completed: task.completed,
+          projectId: task.projectId,
+          $synced: task.$synced,
+        }));
+    },
+    [selectedProjectId]
   );
 
   const filteredTasks = useMemo(() => {
@@ -86,7 +80,7 @@ export function TaskList({
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-6">
-        <AddTaskForm onAdd={onAddTask} isLoading={isAdding} />
+        <AddTaskForm projectId={selectedProjectId} />
 
         <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1">
           {FILTERS.map(({ value, label }) => (
@@ -106,22 +100,10 @@ export function TaskList({
           ))}
         </div>
 
-        {isLoading ? (
-          <div className="flex flex-1 items-center justify-center py-12 text-sm text-muted-foreground">
-            <Loader2 className="mr-2 size-4 animate-spin" />
-            Loading tasks...
-          </div>
-        ) : filteredTasks.length > 0 ? (
+        {filteredTasks.length > 0 ? (
           <ul className="flex flex-col gap-2">
             {filteredTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onToggle={onToggleTask}
-                onDelete={onDeleteTask}
-                isToggling={togglingTaskId === task.id}
-                isDeleting={deletingTaskId === task.id}
-              />
+              <TaskItem key={task.id} task={task} />
             ))}
           </ul>
         ) : (

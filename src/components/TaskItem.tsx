@@ -1,46 +1,55 @@
 "use client";
 
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
+import { toast } from "sonner";
 
+import { tasksCollection } from "@/collections/tasksCollection";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import type { Task } from "@/types";
 
-type TaskItemProps = {
-  task: Task;
-  onToggle: (id: string, completed: boolean) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-  isToggling: boolean;
-  isDeleting: boolean;
+export type LiveTask = {
+  id: number;
+  title: string;
+  completed: boolean;
+  projectId: number;
+  $synced: boolean;
 };
 
-export function TaskItem({
-  task,
-  onToggle,
-  onDelete,
-  isToggling,
-  isDeleting,
-}: TaskItemProps) {
-  const isBusy = isToggling || isDeleting;
+type TaskItemProps = {
+  task: LiveTask;
+};
+
+export function TaskItem({ task }: TaskItemProps) {
+  const handleToggle = async (completed: boolean) => {
+    try {
+      const tx = tasksCollection.update(task.id, (draft) => {
+        draft.completed = completed;
+      });
+      await tx.isPersisted.promise;
+      toast.success(completed ? "Task completed" : "Task marked active");
+    } catch {
+      toast.error("Failed to update task");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const tx = tasksCollection.delete(task.id);
+      await tx.isPersisted.promise;
+      toast.success("Task deleted");
+    } catch {
+      toast.error("Failed to delete task");
+    }
+  };
 
   return (
-    <li
-      className={cn(
-        "flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5",
-        isBusy && "opacity-60"
-      )}
-    >
-      {isToggling ? (
-        <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
-      ) : (
-        <Checkbox
-          checked={task.completed}
-          onCheckedChange={(checked) => onToggle(task.id, checked === true)}
-          disabled={isBusy}
-          aria-label={`Mark "${task.title}" as ${task.completed ? "incomplete" : "complete"}`}
-        />
-      )}
+    <li className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
+      <Checkbox
+        checked={task.completed}
+        onCheckedChange={(checked) => void handleToggle(checked === true)}
+        aria-label={`Mark "${task.title}" as ${task.completed ? "incomplete" : "complete"}`}
+      />
       <span
         className={cn(
           "min-w-0 flex-1 text-sm",
@@ -49,16 +58,21 @@ export function TaskItem({
       >
         {task.title}
       </span>
+      {!task.$synced && (
+        <span
+          className="size-2 shrink-0 animate-pulse rounded-full bg-amber-400"
+          aria-label="Syncing with server"
+        />
+      )}
       <Button
         type="button"
         variant="ghost"
         size="icon-sm"
-        onClick={() => onDelete(task.id)}
-        disabled={isBusy}
+        onClick={() => void handleDelete()}
         aria-label={`Delete "${task.title}"`}
         className="text-muted-foreground hover:text-destructive"
       >
-        {isDeleting ? <Loader2 className="animate-spin" /> : <X />}
+        <X />
       </Button>
     </li>
   );
