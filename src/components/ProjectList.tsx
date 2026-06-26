@@ -39,8 +39,8 @@ export function ProjectList({
               className={cn(
                 "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
                 isSelected
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               <span className="truncate font-medium">{project.name}</span>

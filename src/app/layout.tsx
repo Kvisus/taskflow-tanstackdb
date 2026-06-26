@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Libre_Baskerville } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { SonnerToaster } from "@/components/sonner-toaster";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const libreBaskerville = Libre_Baskerville({
   subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-libre-baskerville",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-ibm-plex-mono",
 });
 
 export const metadata: Metadata = {
@@ -28,9 +30,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${libreBaskerville.variable} ${ibmPlexMono.variable} dark h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-sans">
         <Providers>{children}</Providers>
         <SonnerToaster />
       </body>

@@ -82,22 +82,28 @@ export function TaskList({ selectedProjectId, projectName }: TaskListProps) {
       <div className="flex flex-1 flex-col gap-4 p-6">
         <AddTaskForm projectId={selectedProjectId} />
 
-        <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1">
-          {FILTERS.map(({ value, label }) => (
-            <Button
-              key={value}
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setFilter(value)}
-              className={cn(
-                "flex-1",
-                filter === value && "bg-background text-foreground shadow-sm"
-              )}
-            >
-              {label}
-            </Button>
-          ))}
+        <div className="flex gap-1 rounded-md border border-border bg-muted p-1">
+          {FILTERS.map(({ value, label }) => {
+            const isActive = filter === value;
+
+            return (
+              <Button
+                key={value}
+                type="button"
+                variant={isActive ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setFilter(value)}
+                className={cn(
+                  "flex-1",
+                  isActive
+                    ? "shadow-sm"
+                    : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
+                )}
+              >
+                {label}
+              </Button>
+            );
+          })}
         </div>
 
         {filteredTasks.length > 0 ? (
